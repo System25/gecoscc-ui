@@ -6,9 +6,19 @@
 #, fuzzy
 msgid ""
 msgstr ""
+<<<<<<< HEAD
 "Project-Id-Version: gecoscc 2.1.9\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2015-05-27 12:29+0200\n"
+=======
+"Project-Id-Version: gecoscc 2.1.10\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+<<<<<<< HEAD
+"POT-Creation-Date: 2015-06-30 11:16+0200\n"
+=======
+"POT-Creation-Date: 2015-06-03 17:51+0200\n"
+>>>>>>> 21f990f05cacaa842db251c96e408870682569d1
+>>>>>>> upstream/master
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -136,6 +146,7 @@ msgstr ""
 msgid "Home"
 msgstr ""
 
+<<<<<<< HEAD
 #: gecoscc/static/js/computer.js:115
 msgid "No data has been received from this workstation."
 msgstr ""
@@ -166,6 +177,38 @@ msgid "There were errors while saving this node in Chef"
 msgstr ""
 
 #: gecoscc/static/js/computer.js:151
+=======
+#: gecoscc/static/js/computer.js:117
+msgid "No data has been received from this workstation."
+msgstr ""
+
+#: gecoscc/static/js/computer.js:118
+msgid "Check connection with Chef server."
+msgstr ""
+
+#: gecoscc/static/js/computer.js:126
+msgid "This workstation is not linked."
+msgstr ""
+
+#: gecoscc/static/js/computer.js:127
+msgid "It is possible that this node was imported from AD or LDAP."
+msgstr ""
+
+#: gecoscc/static/js/computer.js:134
+msgid "This workstation has incomplete Ohai information."
+msgstr ""
+
+#: gecoscc/static/js/computer.js:142 gecoscc/static/js/computer.js:152
+#: gecoscc/static/js/computer.js:162
+msgid "This workstation is not working properly:"
+msgstr ""
+
+#: gecoscc/static/js/computer.js:143
+msgid "There were errors while saving this node in Chef"
+msgstr ""
+
+#: gecoscc/static/js/computer.js:153
+>>>>>>> upstream/master
 msgid "Last synchronization had problems during its execution."
 msgstr ""
 
