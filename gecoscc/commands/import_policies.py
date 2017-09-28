@@ -102,6 +102,9 @@ SPROFILES_LOCALIZED = {
 SPROFILES_URL = '/api/software_profiles/'
 SPROFILES_URL_TARGETS = ['ou', 'computer', 'group']
 
+MIMETYPES_POLICY = 'mimetypes_res'
+MIMETYPES_POLICY_URL = '/api/mimetypes/'
+
 
 class Command(BaseCommand):
     description = """
@@ -159,7 +162,7 @@ class Command(BaseCommand):
     def command(self):
         api = _get_chef_api(self.settings.get('chef.url'),
                             toChefUsername(self.options.chef_username),
-                            self.options.chef_pem)
+                            self.options.chef_pem, self.settings.get('chef.ssl.verify'), self.settings.get('chef.version'))
         cookbook_name = self.settings['chef.cookbook_name']
 
         cookbook = get_cookbook(api, cookbook_name)
@@ -195,12 +198,17 @@ class Command(BaseCommand):
                 continue
             if key == PACKAGE_POLICY:
                 self.set_packages_url(value)
+            
+            if key == MIMETYPES_POLICY:
+                self.set_mimetypes_url(value)
+                
             for ex_attr in EXCLUDE_GENERIC_ATTRS:
                 if ex_attr in value['properties']:
                     del(value['properties'][ex_attr])
             path = value.pop('path')
 
             support_os = value['properties']['support_os']['default']
+            is_mergeable = value.pop('is_mergeable', False)
 
             del value['properties']['support_os']
 
@@ -231,6 +239,7 @@ class Command(BaseCommand):
                 'targets': targets,
                 'is_emitter_policy': False,
                 'support_os': support_os,
+                'is_mergeable': is_mergeable,
             }
 
             for lan in languages:
@@ -255,7 +264,8 @@ class Command(BaseCommand):
                     'targets': POLICY_EMITTER_TARGETS[slug],
                     'is_emitter_policy': True,
                     'schema': schema,
-                    'support_os': policies[POLICY_EMITTER_PATH[slug].split('.')[2]]['properties']['support_os']['default']
+                    'support_os': policies[POLICY_EMITTER_PATH[slug].split('.')[2]]['properties']['support_os']['default'],
+                    'is_mergeable': True
                 }
                 for lan in languages:
                     policy['name_' + lan] = POLICY_EMITTER_NAMES_LOCALIZED[lan][slug]
@@ -266,7 +276,12 @@ class Command(BaseCommand):
         value['properties']['package_list']['items']['enum'] = []
         value['properties']['pkgs_to_remove']['autocomplete_url'] = PACKAGE_POLICY_URL
         value['properties']['pkgs_to_remove']['items']['enum'] = []
+    
+    def set_mimetypes_url(self, value):
+        value['properties']['users']['patternProperties']['.*']['properties']['mimetyperelationship']['items']['properties']['mimetypes']['autocomplete_url'] = MIMETYPES_POLICY_URL
+        value['properties']['users']['patternProperties']['.*']['properties']['mimetyperelationship']['items']['properties']['mimetypes']['items']['enum'] = []
 
+        
     def create_software_profiles_policy(self, policies, languages):
         slug = 'package_profile_res'
         schema = deepcopy(SCHEMA_EMITTER)
@@ -281,8 +296,11 @@ class Command(BaseCommand):
             'targets': SPROFILES_URL_TARGETS,
             'is_emitter_policy': True,
             'schema': schema,
-            'support_os': policies[POLICY_EMITTER_PATH['printer_can_view'].split('.')[2]]['properties']['support_os']['default']
+            'support_os': policies[POLICY_EMITTER_PATH['printer_can_view'].split('.')[2]]['properties']['support_os']['default'],
+            'is_mergeable': True
         }
         for lan in languages:
             policy['name_' + lan] = SPROFILES_LOCALIZED_NAME_LOCALIZED[lan]
         self.treatment_policy(policy)
+
+			
