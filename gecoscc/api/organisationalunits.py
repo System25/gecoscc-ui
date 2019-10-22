@@ -16,7 +16,10 @@ from gecoscc.api import TreeResourcePaginated
 from gecoscc.models import OrganisationalUnit, OrganisationalUnits
 from gecoscc.permissions import http_basic_login_required
 from gecoscc.utils import is_domain, MASTER_DEFAULT
+from bson.objectid import ObjectId
 
+import logging
+logger = logging.getLogger(__name__)
 
 @resource(collection_path='/api/ous/',
           path='/api/ous/{oid}/',
@@ -40,6 +43,62 @@ class OrganisationalUnitResource(TreeResourcePaginated):
         if real_obj is not None and obj['path'] != real_obj['path']:
             status_user = self.request.user.get('is_superuser', False) or self.is_ou_empty(obj)
             status = status and status_user
+        
+        # Check the length of the path to see if this OU is root or domain (first OU after root)
+        # EJ: root,RRRRRRRRRRRRRRRRRRRRRRRR,DDDDDDDDDDDDDDDDDDDDDDDD
+        #     root,--------ROOT ID---------,--------DOMAIN ID-------
+        if len(obj['path']) >= 54:
+            # Check that there isn't other ou with this same name in the same domain
+            same_name_count = 0
+            obj_id = None
+            if self.key in obj:
+                obj_id = unicode(obj[self.key])
+            
+            domain_path = obj['path'][0:54]
+            logger.info('domain_path = %s'%(domain_path))
+            if obj_id is None:
+                # Creating a new OU
+                same_name_count = self.collection.find(
+                    {'path': {'$regex': domain_path + '.*'}, 'name': obj['name'],
+                     'type': 'ou'}).count()
+            else:
+                # Moving an OU to other place in the tree 
+                same_name_count = self.collection.find(
+                    {'path': {'$regex': domain_path + '.*'}, 'name': obj['name'],
+                     'type': 'ou', '_id': {' $ne': ObjectId(obj_id)}}).count()
+                
+            if same_name_count > 0:
+                logger.info("duplicated name \"{0}\"".format(obj['name']))
+                self.request.errors.add(obj_id,
+                    'path', "duplicated name \"{0}\"".format(obj['name']))
+                return False
+            
+            domain_id = obj['path'][30:54]
+            logger.info('domain_id = %s'%(domain_id))
+            domain_ou = self.collection.find_one({'_id': ObjectId(domain_id)})
+            logger.info('domain_ou = %s'%(domain_ou['name']))
+            if domain_ou['name'] == obj['name']:
+                logger.info("duplicated name \"{0}\"".format(obj['name']))
+                self.request.errors.add(obj_id,
+                    'path', "duplicated name \"{0}\"".format(obj['name']))
+                return False
+
+        elif len(obj['path']) >= 29:
+            # Check that there isn't two domains with the same name
+            obj_id = None
+            if self.key in obj:
+                obj_id = obj[self.key]
+            
+            root_path = obj['path'][0:29]
+            logger.debug('root_path = %s'%(root_path))
+            same_name_count = self.collection.find(
+                {'path': root_path, 'name': obj['name'],
+                 'type': 'ou'}).count()
+            if same_name_count > 0:
+                self.request.errors.add(obj_id,
+                    'path', "duplicated name \"{0}\"".format(obj['name']))
+                return False
+           
         return status
 
     def is_ou_empty(self, obj):
